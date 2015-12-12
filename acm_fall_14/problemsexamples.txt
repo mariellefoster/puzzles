@@ -1,0 +1,569 @@
+import math
+buffer = []
+
+def i_():
+    global buffer
+    if not buffer:
+        try:
+            buffer = raw_input().split()
+        except:
+            exit()
+    return int(buffer.pop(0))
+
+
+def f_():
+    global buffer
+    if not buffer:
+        try:
+            buffer = raw_input().split()
+        except:
+            exit()
+    return float(buffer.pop(0))
+
+
+def reorder_vertices(v):
+    bottom = [x for x in v if x[1] == 0]
+    left, right = tuple(sorted(bottom))
+    v.reverse()
+    left_i = v.index(left)
+    new_v = [v[(i + left_i) % len(v)] for i in xrange(len(v))]
+#    return new_v, ((left[0] + right[0]) / 2.0, 0)
+    return new_v
+
+
+#def area_from_vertices(v, midpoint):
+#    total_area = 0
+#    last_vert = (v[0][0] - midpoint[0], v[0][1])
+#    i = 1
+#    while i < len(v):
+#        curr_vert = (v[i][0] - midpoint[0], v[i][1])
+#        total_area += abs((last_vert[0] * curr_vert[1] - last_vert[1] * curr_vert[0])/ 2.0)
+#        last_vert = curr_vert
+#        i += 1
+#    return total_area
+
+
+def max_y_from_vertices(v):
+    return max(v, key=lambda x: x[1])[1]
+
+def interpolate_x(lower, upper, y):
+    slope = (upper[0] - lower[0]) / float((upper[1] - lower[1]))
+    return lower[0] + slope * (y - lower[1])
+
+
+def width_of_tank(left_wall, right_wall, y):
+    l_pt_i = 0
+    while left_wall[l_pt_i][1] < y:
+        l_pt_i += 1
+    r_pt_i = 0
+    while right_wall[r_pt_i][1] < y:
+        r_pt_i += 1
+    l_x = interpolate_x(left_wall[l_pt_i - 1], left_wall[l_pt_i], y)
+    r_x = interpolate_x(right_wall[r_pt_i - 1], right_wall[r_pt_i], y)
+    return r_x - l_x
+
+
+case = 1
+while True:
+    n = i_()
+    b, l = f_(), f_()
+    v = [(i_(), i_()) for _ in xrange(n)]
+    v = reorder_vertices(v)
+
+    # "Amount of area" beying poured into the polygon
+    area_amt = l / b / 10  # in m^2
+    
+    # Find y of top edge
+    max_y = max_y_from_vertices(v)
+    
+    # Find index of upper left and right vertices
+    upper_left_i = 0
+    while v[upper_left_i][1] != max_y:
+        upper_left_i += 1
+    upper_right_i = upper_left_i + 1
+    
+    # Find the vertices that make up each wall
+    left_wall = v[:upper_right_i]
+    right_wall = v[upper_right_i:]
+    right_wall.reverse()
+    
+#    print left_wall
+#    print right_wall
+#    print 'hi', width_of_tank(left_wall, right_wall, 5)
+    
+    max_y = max_y / 100.
+    
+    left_i = 0
+    right_i = 0
+    y = 0.0
+    amt = 0.0
+    while y < max_y and amt < area_amt:
+        if (left_wall[left_i + 1][1] < right_wall[right_i + 1][1]):
+            left_i += 1
+            new_y = left_wall[left_i][1] / 100.
+        else:
+            right_i += 1
+            new_y = right_wall[right_i][1] / 100.
+        
+        height = new_y - y
+        w2 = width_of_tank(left_wall, right_wall, new_y * 100) / 100.
+        w1 = width_of_tank(left_wall, right_wall, y * 100) / 100.
+        width = (w2 + w1) / 2.0
+        
+        if (amt + width * height <= area_amt):
+            amt += width * height
+            y = new_y
+        else:
+            s = (w2 - w1) / (new_y - y)
+            a = area_amt - amt
+            dy = ( -w1 + math.sqrt(w1 ** 2 + 2 * s * a) ) / 2
+            y += dy
+            break
+    
+    
+    
+    
+#    step = max_y / 10000000.0
+#    y = 0
+#    amt = 0
+#    while amt < area_amt and y < max_y:
+#        w = width_of_tank(left_wall, right_wall, y * 100) / 100.
+#        amt += w * step
+#        y += step
+#    print y, max_y
+
+
+
+    print 'Case %d: %.04f' % (case, y * 100)
+    case += 1
+    
+    
+    
+#    v, midpoint = reorder_vertices(v)
+#    area = area_from_vertices(v, midpoint)
+#    print area
+#    ans = l / (area * b)
+#    print 'Case %d: %.04f' % (case, ans)
+#    case += 1
+
+
+
+
+
+
+-------------------------------------------
+
+
+buffer = []
+
+def i_(line=False):
+    global buffer
+    if line:
+        return map(int, raw_input().split())
+    if not buffer:
+        try:
+            input = raw_input()
+        except:
+            exit()
+        if not input:
+            exit()
+        buffer = input.split()
+    return int(buffer.pop(0))
+
+
+
+A = {}
+for k in xrange(1, 16):
+    A[(1, k)] = k
+for n in xrange(2, 31):
+    A[(n, 0)] = 0
+for n in xrange(2, 31):
+    for k in xrange(1, 16):
+        A[(n, k)] = A[(n, k - 1)] + A[(n - 1, k)]
+
+
+
+#memo = {}
+def sums(n, k):
+    if n == 0:
+        return 1
+    return A[(n, k)]
+#    if k == 1:
+#        return 1
+#    global memo
+#    '''number of ways to pick k ordered nonnegative ints that sum to n'''
+#    if (n, k) in memo: 
+#        return memo[(n,k)]
+#    return sum([
+#        sums(n - i, k - 1)
+#        for i in range(n + 1)
+#    ])
+
+
+def equal_ratings(ratings):
+    if not ratings:
+        return 0
+    n = len(ratings)
+    if n == 1:
+        return 1
+    total = sum(ratings)
+    return sum([
+        sums(total - i, n - 1)
+        for i in range(ratings[0])
+    ]) + equal_ratings(ratings[1:])
+
+
+case = 1
+while True:
+    n = i_()
+    if not n:
+        break
+    ratings = [i_() for _ in range(n)]
+    total = sum(ratings)
+    ans = sum([
+        sums(a_total, n) for a_total in range(total)])
+    ans += equal_ratings(ratings)
+    print 'Case %d: %d' % (case, ans)
+    case = case + 1
+
+
+
+-------------------------------------------
+
+import math
+buffer = []
+
+def i_(line=False):
+    global buffer
+    if line:
+        return map(int, raw_input().split())
+    if not buffer:
+        try:
+            input = raw_input()
+        except:
+            exit()
+        if not input:
+            exit()
+        buffer = input.split()
+    return int(buffer.pop(0))
+
+
+def choose(n, k):
+    return math.factorial(n) / (math.factorial(n - k) * math.factorial(k))
+
+n = i_()
+casee = 1
+for case in range(n):
+    n, k = i_(), i_()
+    print 'Case %d: %d' % (casee, choose(n, n + 1 - k))
+    casee = casee + 1
+
+
+-------------------------------------------
+
+
+buffer = []
+def i_():
+    global buffer
+    while not buffer:
+        try:
+            buffer = raw_input().split()
+        except:
+            exit()
+    return int(buffer.pop(0))
+
+import math
+
+def cont_fraction(x, lst):
+    mod = x[0]%x[1]
+    whole = (x[0]-mod) / x[1]
+    lst.append(whole)
+    if mod == 0:
+        return
+    x = (x[1], x[0] - (whole * x[1]))
+    cont_fraction(x, lst)
+    
+def rec_num(lst):
+    lst = lst[::-1]
+    b = (lst[0], 1)
+    for i in range(1, len(lst)):
+        a = (lst[i], 1)
+        b = ((a[0]*b[0] + a[1]*b[1]), a[1]*b[0])
+    return b
+    
+case = 1
+while True:
+    len1, len2 = i_(), i_()
+    rec1 = [i_() for _ in xrange(len1)]
+    rec2 = [i_() for _ in xrange(len2)]
+
+
+    a = rec_num(rec1)
+    b = rec_num(rec2)
+
+    add = ((a[0]*b[1] + a[1]*b[0]), a[1]*b[1])
+    sub = ((a[0]*b[1] - a[1]*b[0]), a[1]*b[1])
+    mult = (a[0]*b[0], a[1]*b[1])
+    div = (a[0]*b[1], a[1]*b[0])
+
+#    exit()
+    nums = [add, sub, mult, div]
+    #nums = [mult]
+    
+    print 'Case %d:' % (case)
+    case = case + 1
+
+    for num in nums:
+        lst = []
+        cont_fraction(num, lst)
+        print ' '.join(map(str, lst))
+
+
+
+-------------------------------------------
+
+
+buffer = []
+
+def i_():
+    global buffer
+    while not buffer:
+        try:
+            buffer = raw_input().split()
+        except:
+            exit()
+    return buffer.pop(0)
+
+case = 1
+while True:
+    n = int(i_())
+    d = {i: set() for i in range(40)}
+    for i in xrange(n):
+        w = i_().strip()
+        d[len(w)].add(tuple(sorted(list(w))))
+    m = int(i_())
+    
+    print 'Case %d:' % case
+    case += 1
+    
+    for i in xrange(m):
+        top, bottom = i_(), i_()
+        top, bottom = tuple(sorted(list(top))), tuple(sorted(list(bottom)))
+        if any(x not in bottom for x in top):
+            print 'no'
+            continue
+        candidates = [bottom]
+        size = len(bottom)
+        opts = []
+        while size != len(top):
+            for c in candidates:
+                opts += [tuple(c[:i] + c[i + 1:]) for i in xrange(len(c))]
+            size -= 1
+            opts = filter(lambda opt: opt in d[size], opts)
+            opts = list(set(opts))
+            candidates = filter(lambda opt: all(x in opt for x in top), opts)
+            opts = []
+        print ('yes' if top in candidates else 'no')
+
+-------------------------------------------
+
+
+
+buffer = []
+
+def i_(line=False):
+    global buffer
+    if line:
+        return map(int, raw_input().split())
+    if not buffer:
+        try:
+            input = raw_input()
+        except:
+            exit()
+        if not input:
+            exit()
+        buffer = input.split()
+    return int(buffer.pop(0))
+
+case = 1
+while True:
+    n = i_()
+    t = i_()
+    jobs = map(int, raw_input().split())
+    count = len(jobs)
+    while jobs and t >= jobs[0]:
+        t -= jobs.pop(0)
+    print 'Case %d: %d' % (case, count - len(jobs))
+    case += 1
+
+-------------------------------------------
+
+
+buffer = []
+
+def i_():
+    global buffer
+    while not buffer:
+        try:
+            input_ = raw_input()
+        except:
+            exit()
+        buffer = input_.split()
+    return int(buffer.pop(0))
+
+case = 0
+while True:
+    case += 1
+    i = i_()
+    bs = bin(i)[2:]
+    bs = map(lambda x: x=='1', bs[::-1])
+    tot = sum((2**n) * (n+1) for n in range(len(bs)))
+    big = 2**len(bs) - 1
+    delta = len(bs) * (big-i)
+    tot -= delta
+    print "Case %d: %d" % (case, tot)
+
+    -------------------------------------------
+
+
+import re
+
+def i_():
+    imp = re.sub(r'\s+', ' ', raw_input())
+    imp = imp.strip().split()
+    imp = [] if imp == [''] else imp
+    return map(int, imp)
+
+def t(lo, hi, l):
+    stack = [(lo, hi)]
+    while len(stack) > 0:
+        run = stack.pop(0)
+        x = tree(run[0], run[1], l)
+        if isinstance(x, bool):
+            if not x:
+                return False
+        else:
+            stack += x
+    return True
+
+def tree(lo, hi, l):
+    if lo >= hi-1:
+        return True
+    root = l[lo]
+    i = 1
+    while lo+i < hi:
+        if l[lo+i] < root:
+            i += 1
+        else:
+            break
+    j = i
+    while lo+j < hi:
+        if l[lo+j] <= root:
+            return False
+        j += 1
+    return [(lo+1, lo+i), (lo+i, hi)]
+
+case = 0
+while True:
+    case += 1
+    try:
+        l = []
+        while True:
+            l += i_()
+            if len(l)==0:
+                continue
+            if l[-1] < 0:
+                l = l[:-1]
+                break
+        yes = t(0, len(l), l)
+        yes = "yes" if yes else "no"
+        print "Case %d: %s" % (case, yes)
+    except EOFError as e:
+        break
+
+
+-------------------------------------------
+
+buffer = []
+def i_():
+    global buffer
+    while not buffer:
+        try:
+            buffer = raw_input().split()
+        except:
+            exit()
+    return int(buffer.pop(0))
+
+def is_valid_preorder(t):
+    if len(t) <= 1:
+        return True
+    mid, rest = t[0], t[1:]
+    left = []
+    right = []
+    i = 0
+    while i < len(rest):
+        if rest[i] > mid:
+            break
+        left.append(rest[i])
+        i += 1
+    while i < len(rest):
+        if rest[i] < mid:
+            return False
+        right.append(rest[i])
+        i += 1
+    return is_valid_preorder(left) and is_valid_preorder(right)\
+
+
+
+
+case = 1
+while True:
+    t = []
+    while True:
+        i = i_()
+        if i < 0:
+            break
+        t.append(i)
+    ans = is_valid_preorder(t)
+    print 'Case %d: %s' % (case, 'yes' if ans else 'no')
+    case += 1
+
+
+-------------------------------------------
+
+buffer = []
+
+def i_():
+    global buffer
+    while not buffer:
+        try:
+            input_ = raw_input()
+        except:
+            exit()
+        buffer = input_.split()
+    return int(buffer.pop(0))
+
+case = 0
+while True:
+    cons = i_()
+    case += 1
+    j1 = [(i_(), i) for i in range(cons)]
+    j2 = [(i_(), i) for i in range(cons)]
+    s1 = sorted(j1, reverse=True, key=lambda x: x[0])
+    s2 = sorted(j2, reverse=True, key=lambda x: x[0])
+    printed = False
+    i = 0
+    while i < cons:
+        if s1[i][1] != s2[i][1]:
+            print 'Case %d: %d' % (case, i+1)
+            printed = True
+            break
+        i += 1
+    if not printed:
+        print 'Case %d: agree' % case
+
+
+
+-------------------------------------------
+
+
